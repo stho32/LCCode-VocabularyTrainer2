@@ -1,52 +1,47 @@
 from library.question_answer_store import QuestionAnswerStore
 
-# Initialize the QuestionAnswerStore
-store = QuestionAnswerStore("qa.json")
+def main():
+    # Initialize the QuestionAnswerStore with the qa.json file
+    qa_store = QuestionAnswerStore('qa.json')
 
-while True:
-    # Display the menu
-    print("\nWhat would you like to do?")
-    print("1. Add a record")
-    print("2. Update a record")
-    print("3. Delete a record")
-    print("4. View all records")
-    print("5. Exit")
+    while True:
+        # Display the menu
+        print("\n1. Add a record")
+        print("2. Update a record")
+        print("3. Delete a record")
+        print("4. Exit")
+        
+        # Get the user's choice
+        choice = input("\nPlease enter your choice (1-4): ")
+        
+        if choice == '1':
+            # Add a record
+            question = input("Enter the question: ")
+            expected_response = input("Enter the expected response: ")
+            explanation = input("Enter the explanation: ")
+            qa_store.add_record(question, expected_response, explanation, 0)
 
-    # Get the user's choice
-    choice = input("Enter your choice (1-5): ")
+        elif choice == '2':
+            # Update a record
+            record_id = input("Enter the id of the record to update: ")
+            print("Enter the new values (or leave blank to keep the old values):")
+            question = input("New question: ")
+            expected_response = input("New expected response: ")
+            explanation = input("New explanation: ")
+            qa_store.update_record(record_id, question or None, expected_response or None, explanation or None)
 
-    if choice == "1":
-        # Add a record
-        question = input("Enter the question: ")
-        expected_response = input("Enter the expected response: ")
-        store.add_record(question, expected_response, 0)
-        print("Record added successfully!")
-    elif choice == "2":
-        # Update a record
-        record_id = input("Enter the id of the record you want to update: ")
+        elif choice == '3':
+            # Delete a record
+            record_id = input("Enter the id of the record to delete: ")
+            qa_store.delete_record(record_id)
 
-        print("Leave fields blank if you do not wish to update them.")
-        question = input("Enter the new question: ")
-        expected_response = input("Enter the new expected response: ")
+        elif choice == '4':
+            # Exit the program
+            print("Exiting the program...")
+            break
 
-        # Only update fields for which new values were provided
-        store.update_record(record_id, question or None, expected_response or None)
-        print("Record updated successfully!")
-    elif choice == "3":
-        # Delete a record
-        record_id = input("Enter the id of the record you want to delete: ")
-        store.delete_record(record_id)
-        print("Record deleted successfully!")
-    elif choice == "4":
-        # View all records
-        for record in store.qa_storage:
-            print(record)
-    elif choice == "5":
-        # Exit
-        print("Exiting...")
-        break
-    else:
-        print("Invalid choice. Please enter a number between 1 and 5.")
+        else:
+            print("Invalid choice. Please enter a number between 1 and 4.")
 
-# Save any changes to the JSON file before exiting
-store.save_storage()
+if __name__ == "__main__":
+    main()

@@ -30,6 +30,7 @@ Please write a storage for questions and answers in the following way:
 	- an id (that is generated as a random guid when the data record is entered)
 	- a question
 	- an expected response
+	- explanation: Contains an explanation about why the question should be answered like the expected response and why it should not be answered in another way. 
 	- an int number "position" (which represents the position of the question in the current queue)  
 
 Create the following possible operations:

@@ -22,12 +22,12 @@ class QuestionAnswerStore:
         with open(self.storage_file, 'w') as file:
             json.dump(self.qa_storage, file)
 
-    def add_record(self, question, expected_response, position):
+    def add_record(self, question, expected_response, explanation, position):
         # Generate a unique ID for the new record
         record_id = str(uuid.uuid4())
 
         # Create a new record
-        new_record = {"id": record_id, "question": question, "expected_response": expected_response, "position": position}
+        new_record = {"id": record_id, "question": question, "expected_response": expected_response, "explanation": explanation, "position": position}
 
         # Add the new record to qa_storage
         self.qa_storage.append(new_record)
@@ -35,7 +35,7 @@ class QuestionAnswerStore:
         # Save the updated qa_storage to the json file
         self.save_storage()
 
-    def update_record(self, record_id, question=None, expected_response=None, position=None):
+    def update_record(self, record_id, question=None, expected_response=None, explanation=None, position=None):
         # Find the record with the given ID
         for record in self.qa_storage:
             if record["id"] == record_id:
@@ -44,6 +44,8 @@ class QuestionAnswerStore:
                     record["question"] = question
                 if expected_response is not None:
                     record["expected_response"] = expected_response
+                if explanation is not None:
+                    record["explanation"] = explanation
                 if position is not None:
                     record["position"] = position
 

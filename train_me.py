@@ -1,65 +1,77 @@
 from library.question_answer_store import QuestionAnswerStore
 import random
 
-# Initialize the QuestionAnswerStore
-store = QuestionAnswerStore("qa.json")
+class TrainingSession:
+    def __init__(self):
+        self.qa_store = QuestionAnswerStore('qa.json')
+        self.session_queue = []
 
-# Load the questions and reduce the "position" by 1 unless it's already 0
-for record in store.qa_storage:
-    if record["position"] > 0:
-        record["position"] -= 1
+    def initialize_session(self):
+        # Reduce the position of each record by 1, unless it's already 0
+        for record in self.qa_store.qa_storage:
+            if record["position"] > 0:
+                record["position"] -= 1
+                self.qa_store.update_record(record["id"], position=record["position"])
 
-# Create a session queue with questions that have "position" between 0 and 5
-session_queue = [record for record in store.qa_storage if 0 <= record["position"] <= 5]
+        # Form the session queue from questions with a position between 0 and 5
+        for record in self.qa_store.qa_storage:
+            if 0 <= record["position"] <= 5:
+                # Add the question ID to the session queue 4 times
+                self.session_queue.extend([record["id"]] * 4)
 
-# At most, we only take 5 different questions
-session_queue = session_queue[:5]
+        # Shuffle the session queue
+        random.shuffle(self.session_queue)
 
-# Initialize the session queue so that each question is asked 4 times
-session_queue *= 4
+        # Limit the session queue to 20 entries
+        self.session_queue = self.session_queue[:20]
 
-# Shuffle the session queue
-random.shuffle(session_queue)
+    def execute_session(self):
+        while self.session_queue:
+            # Get the next question ID from the session queue
+            question_id = self.session_queue.pop(0)
+            # Get the corresponding question record
+            question_record = next(record for record in self.qa_store.qa_storage if record["id"] == question_id)
 
-# Track the questions that have been answered correctly on the first attempt
-first_attempt_correct = set()
+            wrong_attempts = 0
+            while True:
+                # Ask the question and get the user's response
+                user_response = input(f"\n{question_record['question']}\nYour answer: ")
 
-while session_queue:
-    print(f"\nQuestions remaining in the queue: {len(session_queue)}")
+                if user_response.lower() == "no content":
+                    # If the user wants to leave the session, return immediately
+                    return
 
-    # Ask the next question in the queue
-    current_question = session_queue.pop(0)
-    incorrect_attempts = 0
+                if user_response == question_record["expected_response"]:
+                    # If the user's response is correct, break the loop and move on to the next question
+                    print("Correct!")
+                    break
+                else:
+                    # If the user's response is incorrect, add the question ID to the end of the session queue
+                    print("Incorrect. Try again.")
+                    self.session_queue.append(question_id)
+                    wrong_attempts += 1
 
-    while True:
-        user_answer = input(f"\n{current_question['question']} ")
+                if wrong_attempts == 3:
+                    # If the user has attempted the question 3 times without success, reveal the correct answer
+                    print(f"The correct answer is: {question_record['expected_response']}")
+                    print(f"Explanation: {question_record['explanation']}")
+                    break
 
-        if user_answer == "":
-            print("You have chosen to leave the training session.")
-            break
+            print(f"Questions remaining in the queue: {len(self.session_queue)}")
 
-        if user_answer == current_question["expected_response"]:
-            print("Correct!")
-            if incorrect_attempts == 0:
-                first_attempt_correct.add(current_question["id"])
-            break
-        else:
-            print("Incorrect. Try again.")
-            incorrect_attempts += 1
-            if incorrect_attempts >= 3:
-                print(f"The correct answer is: {current_question['expected_response']}")
-                break
-            # Add the current question back to the queue as the next question and at the end
-            session_queue.insert(0, current_question)
-            session_queue.append(current_question)
+    def finalize_session(self):
+        # Increase the position of each record by 10 if it was not answered wrong during the session
+        for record in self.qa_store.qa_storage:
+            if record["id"] not in self.session_queue:
+                record["position"] += 10
+                self.qa_store.update_record(record["id"], position=record["position"])
 
-    if user_answer == "":
-        break
+        # Save the updated qa_storage to the json file
+        self.qa_store.save_storage()
 
-# Update the positions of the tasks in the training queue
-for record in store.qa_storage:
-    if record["id"] in first_attempt_correct:
-        record["position"] += 10
 
-# Save the updated qa_storage to the json file
-store.save_storage()
+if __name__ == "__main__":
+    session = TrainingSession()
+    session.initialize_session()
+    session.execute_session()
+    session.finalize_session()
